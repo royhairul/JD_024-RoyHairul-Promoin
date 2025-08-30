@@ -8,9 +8,11 @@ import {
   Input,
   Button,
   Link,
+  Avatar,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 export default function MarketplaceForm() {
   const router = useRouter();
@@ -23,11 +25,19 @@ export default function MarketplaceForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md p-4 shadow-xl">
-        <CardHeader className="flex flex-col gap-2 text-center">
-          <h1 className="text-2xl font-bold">Marketplace Links 🛒</h1>
-          <p className="text-sm text-gray-500">
-            Masukkan link marketplace Anda untuk memudahkan integrasi
-          </p>
+        <CardHeader className="flex gap-4 bg-primary/10 p-4 rounded-lg mb-4">
+          {/* <div className="text-4xl px-3 py-1 bg-primary rounded-full">1</div> */}
+          <Link href="/onboarding/socialmedia" className="items-end">
+            <IconChevronLeft />
+          </Link>
+          <Avatar name="3" color="primary" className="font-bold opacity-80" />
+          <div className="flex-1">
+            <h1 className="text-lg font-bold">Marketplace</h1>
+            <p className="text-sm">Integrasi dengan e-commerce anda!</p>
+          </div>
+          <Link href="/onboarding/marketplace" className="items-end">
+            <IconChevronRight />
+          </Link>
         </CardHeader>
 
         <CardBody className="gap-4">

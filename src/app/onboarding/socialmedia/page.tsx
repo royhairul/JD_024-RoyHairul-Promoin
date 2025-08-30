@@ -8,6 +8,7 @@ import {
   Input,
   Button,
   Link,
+  Avatar,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,6 +17,9 @@ import {
   IconBrandMeta,
   IconBrandTiktokFilled,
   IconBrandYoutubeFilled,
+  IconChevronLeft,
+  IconChevronRight,
+  IconLink,
   IconPlus,
 } from "@tabler/icons-react";
 
@@ -60,7 +64,7 @@ export default function SocialMediaForm() {
         id: socials.length + 1,
         label: `Custom ${socials.length + 1}`,
         placeholder: "https://example.com/username",
-        icon: <IconPlus />,
+        icon: <IconLink />,
         value: "",
       },
     ]);
@@ -80,11 +84,25 @@ export default function SocialMediaForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md p-4 shadow-xl">
-        <CardHeader className="flex flex-col gap-2 text-center">
+        {/* <CardHeader className="flex flex-col gap-2 text-center">
           <h1 className="text-2xl font-bold">Social Media Links 🌐</h1>
           <p className="text-sm text-gray-500">
             Tambahkan akun sosial media Anda
           </p>
+        </CardHeader> */}
+        <CardHeader className="flex gap-4 bg-primary/10 p-4 rounded-lg mb-4">
+          {/* <div className="text-4xl px-3 py-1 bg-primary rounded-full">1</div> */}
+          <Link href="/onboarding/site" className="items-end">
+            <IconChevronLeft />
+          </Link>
+          <Avatar name="2" color="primary" className="font-bold opacity-80" />
+          <div className="flex-1">
+            <h1 className="text-lg font-bold">Social Media</h1>
+            <p className="text-sm">Hubungkan dengan sosial media!</p>
+          </div>
+          <Link href="/onboarding/marketplace" className="items-end">
+            <IconChevronRight />
+          </Link>
         </CardHeader>
 
         <CardBody className="gap-4">
