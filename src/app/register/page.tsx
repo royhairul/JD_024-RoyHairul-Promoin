@@ -12,18 +12,52 @@ import {
 } from "@heroui/react";
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import axios from "axios";
 
 export default function Register() {
   const router = useRouter();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    // TODO: taruh logic register (call API, validate, dll.)
-    router.push("/dashboard");
+  // Handler register dengan backend
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      alert("Password and Confirm Password do not match!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
+        {
+          fullName,
+          email,
+          password,
+        },
+        { withCredentials: true } // jika backend pakai cookie
+      );
+
+      console.log("Register success:", data);
+      router.push("/dashboard"); // redirect setelah register
+    } catch (error: any) {
+      console.error(
+        "Register error:",
+        error.response?.data?.message || error.message
+      );
+      alert(error.response?.data?.message || "Register failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleRegister = () => {
-    // TODO: integrasi ke Google OAuth (next-auth / supabase / firebase)
-    console.log("Sign up with Google clicked");
+    // Redirect ke endpoint backend yang handle Google OAuth
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google`;
   };
 
   return (
@@ -40,24 +74,32 @@ export default function Register() {
             label="Full Name"
             placeholder="Enter your full name"
             type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
           />
           <Input
             isRequired
             label="Email"
             placeholder="Enter your email"
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <Input
             isRequired
             label="Password"
             placeholder="Enter your password"
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <Input
             isRequired
             label="Confirm Password"
             placeholder="Confirm your password"
             type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </CardBody>
 
@@ -66,6 +108,7 @@ export default function Register() {
             color="primary"
             fullWidth
             onPress={handleRegister}
+            isLoading={loading}
             className="font-medium"
           >
             Sign Up
