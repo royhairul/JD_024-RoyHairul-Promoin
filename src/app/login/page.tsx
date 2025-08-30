@@ -9,19 +9,68 @@ import {
   Button,
   Link,
   Divider,
+  addToast,
 } from "@heroui/react";
-import { IconBrandGoogle, IconBrandGoogleFilled } from "@tabler/icons-react";
+import { IconBrandGoogleFilled } from "@tabler/icons-react";
+import Image from "next/image";
+import { useState } from "react";
+import { api } from "@/lib/axios";
+import { loginSchema } from "./schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 export default function Login() {
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setLoading(true);
+    try {
+      const { data: res } = await api.post("/auth/login", data);
+      console.log("Login success:", res);
+    } catch (err) {
+      addToast({
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
+        color: "danger",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleLogin = () => {
-    // TODO: Integrasi dengan next-auth / Supabase / Firebase
-    console.log("Sign in with Google clicked");
+    setLoading(true);
+    try {
+      window.location.href = "/api/auth/google";
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md p-4 shadow-xl">
-        <CardHeader className="flex flex-col gap-2 text-center">
+      <Card className="w-full max-w-md p-4 shadow-lg border border-gray-200">
+        <CardHeader className="flex flex-col items-start">
+          <Image
+            src="/assets/logo-sm.png"
+            alt="Logo"
+            width={60}
+            height={24}
+            className="pt-6 pb-2"
+          />
           <h1 className="text-2xl font-bold">Welcome Back 👋</h1>
           <p className="text-sm">Login to your account</p>
         </CardHeader>
@@ -32,12 +81,18 @@ export default function Login() {
             label="Email"
             placeholder="Enter your email"
             type="email"
+            {...register("email")}
+            isInvalid={!!errors.email}
+            errorMessage={errors.email?.message}
           />
           <Input
             isRequired
             label="Password"
             placeholder="Enter your password"
             type="password"
+            {...register("password")}
+            isInvalid={!!errors.password}
+            errorMessage={errors.password?.message}
           />
 
           <div className="flex justify-end text-sm">
@@ -48,7 +103,14 @@ export default function Login() {
         </CardBody>
 
         <CardFooter className="flex flex-col gap-3">
-          <Button color="primary" fullWidth>
+          <Button
+            color="primary"
+            variant="shadow"
+            fullWidth
+            onPress={() => handleSubmit(onSubmit)()}
+            isLoading={loading}
+            isDisabled={loading}
+          >
             Login
           </Button>
 
