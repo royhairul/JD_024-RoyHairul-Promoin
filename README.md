@@ -1,4 +1,6 @@
-# 🌟 Promoin Frontend
+# Promoin - Project
+
+![Promoin Banner](./docs/promoin-banner.png)
 
 A modern frontend application for **Promoin**, built with **Next.js**, **TailwindCSS**, **HeroUI**, **Ant Design**, and **Zod** for form validation. This app consumes the Promoin REST API to manage users, promotions, and authentication.
 
