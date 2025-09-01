@@ -13,6 +13,7 @@ import {
 import { IconBrandGoogleFilled } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 import axios from "axios";
 
 export default function Register() {
@@ -62,10 +63,21 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md p-4 shadow-xl">
-        <CardHeader className="flex flex-col gap-2 text-center">
-          <h1 className="text-2xl font-bold">Create Account ✨</h1>
-          <p className="text-sm text-gray-500">Register to get started</p>
+      <Card className="w-full max-w-md p-4 shadow-lg border border-gray-200">
+        <CardHeader className="mt-4 flex flex-col items-start">
+          <Image
+            src="/assets/logo.png"
+            alt="Logo"
+            width={120}
+            height={90}
+            className="pt-6 pb-2"
+          />
+          <h1 className="text-2xl font-bold tracking-tight">
+            Buat Akun Baru ✨
+          </h1>
+          <p className="text-sm py-2 opacity-50">
+            Mulai promosikan sekarang juga!
+          </p>
         </CardHeader>
 
         <CardBody className="gap-4">
@@ -105,7 +117,7 @@ export default function Register() {
 
         <CardFooter className="flex flex-col gap-3">
           <Button
-            color="primary"
+            color="warning"
             fullWidth
             onPress={handleRegister}
             isLoading={loading}
@@ -134,7 +146,7 @@ export default function Register() {
             <Link
               href="/login"
               size="sm"
-              color="primary"
+              color="warning"
               className="font-medium"
             >
               Login
