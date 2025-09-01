@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardHeader,
@@ -7,156 +8,165 @@ import {
   CardFooter,
   Input,
   Button,
-  Avatar,
+  CircularProgress,
   Textarea,
+  addToast,
 } from "@heroui/react";
-import { IconChevronRight } from "@tabler/icons-react";
 import { ColorPicker, Upload, Modal, Image } from "antd";
+import type { UploadFile, UploadProps } from "antd";
 import ImgCrop from "antd-img-crop";
-import { useState } from "react";
+import { IconChevronRight } from "@tabler/icons-react";
 import Link from "next/link";
-import type { GetProp, UploadFile, UploadProps } from "antd";
-import type { RcFile } from "antd/es/upload";
 import ColorThief from "colorthief";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { profileSchema } from "./schema/profile-schema";
+import { api } from "@/lib/axios";
+import { useRouter } from "next/navigation";
 
-type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
+type RcFileType = File;
 
-const getBase64 = (file: FileType): Promise<string> =>
+const getBase64 = (file: RcFileType): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
+    reader.onerror = (err) => reject(err);
   });
 
-export default function ProfileForm() {
-  const [file, setFile] = useState<File | null>(null);
-  const [name, setName] = useState("");
-  const [color, setColor] = useState("#4f46e5"); // default color
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
-  // State untuk preview modal
+export default function ProfileForm() {
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [previewTitle, setPreviewTitle] = useState("");
+  const [color, setColor] = useState("#4f46e5");
+  const route = useRouter();
 
-  // ✅ Handle perubahan file upload
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { name: "", username: "", bio: "", color },
+  });
+
+  // Handle Upload Change
   const onChange: UploadProps["onChange"] = async ({
     fileList: newFileList,
   }) => {
-    const latestFileList = newFileList.slice(-1); // hanya 1 file
+    const latestFile = newFileList.slice(-1)[0];
+    if (latestFile?.originFileObj) {
+      const base64 = await getBase64(latestFile.originFileObj as RcFileType);
+      latestFile.preview = base64;
 
-    if (latestFileList[0]?.originFileObj) {
-      const base64 = await getBase64(latestFileList[0].originFileObj as File);
-      latestFileList[0].preview = base64;
-      setFile(latestFileList[0].originFileObj as File);
-
-      // 🔥 Ambil warna dominan pakai color-thief
-      const img = new window.Image();
+      // Ambil dominant color
+      const img = document.createElement("img");
       img.crossOrigin = "Anonymous";
       img.src = base64;
-
       img.onload = () => {
         const colorThief = new ColorThief();
         try {
-          const result = colorThief.getColor(img); // [r, g, b]
-          const hex = rgbToHex(result[0], result[1], result[2]);
-          setColor(hex); // update ColorPicker
+          const [r, g, b] = colorThief.getColor(img);
+          const hex = rgbToHex(r, g, b);
+          setColor(hex);
+          setValue("color", hex); // update form value
         } catch (err) {
           console.error("ColorThief error:", err);
         }
       };
     }
-
-    setFileList(latestFileList);
+    setFileList(newFileList.slice(-1));
   };
 
-  // ✅ Preview dalam modal
   const onPreview = async (file: UploadFile) => {
     let src = file.url || (file.preview as string);
-
     if (!src && file.originFileObj) {
-      src = await getBase64(file.originFileObj as FileType);
+      src = await getBase64(file.originFileObj as RcFileType);
     }
-
     setPreviewImage(src || "");
     setPreviewOpen(true);
     setPreviewTitle(file.name || "Preview");
   };
 
-  // ✅ Handle submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!name) {
-      alert("Nama wajib diisi!");
-      return;
-    }
-
-    if (!file) {
+  const onSubmit = async (data: ProfileFormValues) => {
+    if (!fileList[0]?.originFileObj) {
       alert("Logo wajib diupload!");
       return;
     }
 
     const formData = new FormData();
-    formData.append("name", name);
-    formData.append("color", color);
-    formData.append("file", file);
+    formData.append("name", data.name);
+    formData.append("slug", data.username);
+    formData.append("bio", data.bio ?? "");
+    formData.append("theme_color", data.color);
+    formData.append("logo", fileList[0].originFileObj);
 
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      console.log(formData.get("logo"));
+      const { data: res } = await api.post("/profile", formData, {
+        withCredentials: true,
       });
-
-      if (!res.ok) throw new Error("Upload gagal");
-
-      console.log("Profile Data terkirim!");
-      alert("Profile berhasil disimpan!");
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan saat upload.");
+      route.push("/onboarding/socialmedia");
+    } catch (err: any) {
+      addToast({
+        title: "Create Profile Failed",
+        description: err.message,
+        color: "danger",
+      });
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md shadow-lg p-4">
-        <CardHeader className="flex gap-4 bg-primary/10 p-4 rounded-lg mb-4">
-          <Avatar name="1" color="primary" className="font-bold opacity-80" />
+    <div className="flex min-h-screen items-start justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md p-4 shadow-lg border border-gray-200">
+        <CardHeader className="flex gap-4 bg-warning/10 p-4 rounded-lg mb-4">
           <div className="flex-1">
-            <h1 className="text-lg font-bold">Profile Setup</h1>
-            <p className="text-sm">Lengkapi profil anda</p>
+            <h1 className="text-lg font-bold text-warning">Profile Anda</h1>
+            <p className="text-xs text-warning/60">Lengkapi profil anda</p>
           </div>
-          <Link href="/onboarding/site" className="items-end">
+          <CircularProgress
+            color="warning"
+            showValueLabel
+            size="lg"
+            value={25}
+            valueLabel="1/4"
+            classNames={{ value: "font-semibold" }}
+          />
+          <Link href="/onboarding/socialmedia" className="items-end">
             <IconChevronRight />
           </Link>
         </CardHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardBody className="gap-4">
             {/* File Upload */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium">Brand Logo</label>
               <ImgCrop rotationSlider cropShape="rect" aspect={1}>
                 <Upload
-                  beforeUpload={() => false} // ✅ jangan auto upload
+                  beforeUpload={() => false}
                   listType="picture-card"
                   fileList={fileList}
                   onChange={onChange}
                   onPreview={onPreview}
+                  showUploadList={{ showPreviewIcon: false }}
                 >
                   {fileList.length < 1 && "+ Upload"}
                 </Upload>
               </ImgCrop>
             </div>
 
-            {/* Modal Preview */}
             <Modal
               open={previewOpen}
               title={previewTitle}
               footer={null}
               onCancel={() => setPreviewOpen(false)}
+              destroyOnHidden
             >
               <Image
                 alt="preview"
@@ -168,59 +178,68 @@ export default function ProfileForm() {
             {/* Color Picker */}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Brand Color</label>
-              <div>
-                <ColorPicker
-                  value={color}
-                  size="large"
-                  showText
-                  onChange={(val) => setColor(val.toHexString())}
-                />
-              </div>
+              <ColorPicker
+                className="w-max"
+                value={color}
+                size="large"
+                showText
+                onChange={(val) => {
+                  const hex = val.toHexString();
+                  setColor(hex);
+                  setValue("color", hex);
+                }}
+              />
             </div>
 
             {/* Nama */}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Nama</label>
               <Input
-                placeholder="Masukkan nama lengkap"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Masukkan nama"
+                {...register("name")}
                 isRequired
               />
+              {errors.name && (
+                <span className="text-red-500 text-sm">
+                  {errors.name.message}
+                </span>
+              )}
             </div>
 
             {/* Username */}
             <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Username</label>
               <Input
                 placeholder="username"
-                type="text"
                 startContent={
-                  <div className="pointer-events-none flex items-center">
-                    <span className="text-primary-400 text-sm font-medium">
-                      promoin.my.id/
-                    </span>
-                  </div>
+                  <span className="text-warning-400 text-sm font-semibold">
+                    promoin.my.id/
+                  </span>
                 }
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register("username")}
                 isRequired
               />
+              {errors.username && (
+                <span className="text-red-500 text-sm">
+                  {errors.username.message}
+                </span>
+              )}
             </div>
 
             {/* Bio */}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Bio</label>
               <Textarea
-                className="w-full"
                 placeholder="Enter your description"
+                {...register("bio")}
+                isRequired
               />
             </div>
           </CardBody>
 
-          <CardFooter className="flex justify-end">
-            <Button type="submit" color="primary" disabled={!name || !file}>
-              Save Profile
+          <CardFooter>
+            <Button fullWidth type="submit" color="warning">
+              Simpan Profile
             </Button>
           </CardFooter>
         </form>
@@ -231,13 +250,5 @@ export default function ProfileForm() {
 
 // helper konversi rgb -> hex
 function rgbToHex(r: number, g: number, b: number) {
-  return (
-    "#" +
-    [r, g, b]
-      .map((x) => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? "0" + hex : hex;
-      })
-      .join("")
-  );
+  return "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
