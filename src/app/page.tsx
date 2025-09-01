@@ -4,6 +4,7 @@ import { Button } from "@heroui/react";
 import Image from "next/image";
 import Link from "next/link";
 import { IconBook2, IconSparkles } from "@tabler/icons-react";
+import Stepper, { Step } from "@/components/stepper";
 
 export default function Home() {
   return (
@@ -15,7 +16,7 @@ export default function Home() {
           alt="Logo"
           width={120}
           height={24}
-          className="my-8"
+          className="my-2"
         />
 
         <div className="flex gap-4">
@@ -25,7 +26,7 @@ export default function Home() {
           <Link href={"/login"}>
             <Button
               variant="shadow"
-              color="primary"
+              color="warning"
               className="font-medium px-8"
             >
               Login
@@ -37,8 +38,15 @@ export default function Home() {
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4">
         <h1 className="text-4xl font-bold tracking-tighter max-w-2xl mx-auto">
-          Welcome to Promoin
+          Welcome to
         </h1>
+        <Image
+          src="/assets/logo.png"
+          alt="Logo"
+          width={400}
+          height={24}
+          className="my-8"
+        />
 
         <p className="my-5 text-sm font-normal max-w-2xl mx-auto opacity-70">
           Platform link-in-bio mendukung promosi bisnis dan kreator. Tidak hanya
@@ -47,21 +55,23 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-2xl mx-auto">
-          <Button
-            startContent={<IconSparkles />}
-            color="primary"
-            variant="shadow"
-            className="font-medium py-2 px-6"
-          >
-            Mulai Sekarang
-          </Button>
-          <Button
+          <Link href={"/login"}>
+            <Button
+              startContent={<IconSparkles />}
+              color="warning"
+              variant="shadow"
+              className="font-medium py-2 px-6"
+            >
+              Mulai Sekarang
+            </Button>
+          </Link>
+          {/* <Button
             endContent={<IconBook2 />}
             variant="bordered"
             className="px-6"
           >
             Baca Panduan
-          </Button>
+          </Button> */}
         </div>
       </main>
     </div>
