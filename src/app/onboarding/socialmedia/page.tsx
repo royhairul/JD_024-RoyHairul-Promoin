@@ -8,7 +8,7 @@ import {
   Input,
   Button,
   Link,
-  Avatar,
+  CircularProgress,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,127 +16,180 @@ import {
   IconBrandInstagramFilled,
   IconBrandMeta,
   IconBrandTiktokFilled,
+  IconBrandWhatsappFilled,
   IconBrandYoutubeFilled,
   IconChevronLeft,
   IconChevronRight,
   IconLink,
   IconPlus,
 } from "@tabler/icons-react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { api } from "@/lib/axios";
+import {
+  socialMediaSchema,
+  SocialMediaFormValues,
+} from "./schema/socialmedia-schema";
+import { PREFIX_MAP } from "./helpers/prefix-map";
 
 export default function SocialMediaForm() {
   const router = useRouter();
+
   const [socials, setSocials] = useState([
     {
       id: 1,
-      label: "Instagram",
-      placeholder: "https://instagram.com/username",
-      icon: <IconBrandInstagramFilled />,
+      label: "Whatsapp",
+      placeholder: "62 812-3456-7890",
+      icon: <IconBrandWhatsappFilled />,
       value: "",
     },
     {
       id: 2,
-      label: "Facebook",
-      placeholder: "https://facebook.com/username",
-      icon: <IconBrandMeta />,
+      label: "Instagram",
+      placeholder: "username",
+      icon: <IconBrandInstagramFilled />,
       value: "",
     },
     {
       id: 3,
       label: "TikTok",
-      placeholder: "https://tiktok.com/@username",
+      placeholder: "username",
       icon: <IconBrandTiktokFilled />,
       value: "",
     },
     {
       id: 4,
       label: "YouTube",
-      placeholder: "https://youtube.com/@channel",
+      placeholder: "channel",
       icon: <IconBrandYoutubeFilled />,
+      value: "",
+    },
+    {
+      id: 5,
+      label: "Facebook",
+      placeholder: "username",
+      icon: <IconBrandMeta />,
       value: "",
     },
   ]);
 
-  // Tambahkan input baru
+  const { control, handleSubmit } = useForm<SocialMediaFormValues>({
+    resolver: zodResolver(socialMediaSchema),
+    defaultValues: {
+      socials: socials.map((s) => ({ label: s.label, value: s.value })),
+    },
+  });
+
+  // Tambah custom social link
   const addSocial = () => {
-    setSocials([
-      ...socials,
-      {
-        id: socials.length + 1,
-        label: `Custom ${socials.length + 1}`,
-        placeholder: "https://example.com/username",
-        icon: <IconLink />,
-        value: "",
-      },
-    ]);
+    const newSocial = {
+      id: Date.now(),
+      label: `Custom ${socials.length + 1}`,
+      placeholder: "example.com",
+      icon: <IconLink />,
+      value: "",
+    };
+    setSocials([...socials, newSocial]);
   };
 
-  // Update value saat user mengetik
-  const handleChange = (id: number, value: string) => {
-    setSocials(socials.map((s) => (s.id === id ? { ...s, value: value } : s)));
-  };
+  // Submit form
+  const onSubmit = (data: SocialMediaFormValues) => {
+    const payload = data.socials
+      .filter((s) => s.value && s.value.trim() !== "")
+      .map((s) => {
+        const prefix = PREFIX_MAP[s.label] || "https://";
+        let url = s.value;
+        if (!url?.startsWith(prefix)) url = prefix + url;
+        return { url };
+      });
 
-  const handleSave = () => {
-    // TODO: Kirim ke API / DB
-    console.log("Social media links:", socials);
-    router.push("/dashboard");
+    console.log("Payload siap dikirim:", payload);
+
+    api
+      .post("/link", payload)
+      .then((res) => {
+        console.log("Berhasil:", res.data);
+        router.push("/onboarding/marketplace");
+      })
+      .catch((err) => {
+        console.error("Gagal:", err);
+      });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-start justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md p-4 shadow-xl">
-        {/* <CardHeader className="flex flex-col gap-2 text-center">
-          <h1 className="text-2xl font-bold">Social Media Links 🌐</h1>
-          <p className="text-sm text-gray-500">
-            Tambahkan akun sosial media Anda
-          </p>
-        </CardHeader> */}
-        <CardHeader className="flex gap-4 bg-primary/10 p-4 rounded-lg mb-4">
-          {/* <div className="text-4xl px-3 py-1 bg-primary rounded-full">1</div> */}
-          <Link href="/onboarding/site" className="items-end">
+        <CardHeader className="flex gap-4 bg-warning/10 p-4 rounded-lg mb-4">
+          <Link href="/onboarding/profile">
             <IconChevronLeft />
           </Link>
-          <Avatar name="2" color="primary" className="font-bold opacity-80" />
           <div className="flex-1">
-            <h1 className="text-lg font-bold">Social Media</h1>
-            <p className="text-sm">Hubungkan dengan sosial media!</p>
+            <h1 className="text-lg font-bold text-warning">Sosial Media</h1>
+            <p className="text-xs text-warning/60">
+              Sambungkan dengan akun sosial media
+            </p>
           </div>
-          <Link href="/onboarding/marketplace" className="items-end">
+          <CircularProgress
+            color="warning"
+            showValueLabel
+            size="lg"
+            value={50}
+            valueLabel="2/4"
+            classNames={{ value: "font-semibold" }}
+          />
+          <Link href="/onboarding/marketplace">
             <IconChevronRight />
           </Link>
         </CardHeader>
 
-        <CardBody className="gap-4">
-          {socials.map((social) => (
-            <Input
-              key={social.id}
-              startContent={social.icon}
-              placeholder={social.placeholder}
-              type="url"
-              value={social.value}
-              onChange={(e) => handleChange(social.id, e.target.value)}
-            />
-          ))}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardBody className="gap-4">
+            {socials.map((social, index) => (
+              <Controller
+                key={social.id}
+                name={`socials.${index}.value`}
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    startContent={
+                      <div className="pointer-events-none flex items-center gap-2">
+                        {social.icon}
+                        <span className="text-default-400 font-medium text-small">
+                          {PREFIX_MAP[social.label] || "https://"}
+                        </span>
+                      </div>
+                    }
+                    placeholder={social.placeholder}
+                    type="text"
+                  />
+                )}
+              />
+            ))}
+            <Button
+              color="warning"
+              variant="flat"
+              startContent={<IconPlus size={18} />}
+              onPress={addSocial}
+            >
+              Tambah Sosial Media
+            </Button>
+          </CardBody>
 
-          <Button
-            variant="bordered"
-            startContent={<IconPlus size={18} />}
-            onPress={addSocial}
-          >
-            Tambah Sosial Media
-          </Button>
-        </CardBody>
-
-        <CardFooter className="flex flex-col gap-3">
-          <Button color="primary" fullWidth onPress={handleSave}>
-            Simpan & Lanjutkan
-          </Button>
-          <p className="text-sm text-gray-500 text-center">
-            Bisa dilewati dan ditambahkan nanti di dashboard{" "}
-            <Link href="/dashboard" size="sm" color="primary">
-              Skip →
-            </Link>
-          </p>
-        </CardFooter>
+          <CardFooter className="flex flex-col gap-3">
+            <Button color="warning" variant="shadow" fullWidth type="submit">
+              Simpan & Lanjutkan
+            </Button>
+            <Button
+              variant="bordered"
+              fullWidth
+              type="button"
+              onClick={handleSubmit(onSubmit)}
+            >
+              Skip
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );
