@@ -11,15 +11,18 @@ interface ProfileSectionProps {
   followers: string;
   following: string;
   posts: string;
+  cta_text?: string;
+  cta_link?: string;
+  theme_color?: string;
 }
 
 export function ProfileSection({
   name,
   bio,
   avatar,
-  followers,
-  following,
-  posts,
+  cta_text,
+  cta_link,
+  theme_color = "#7c3aed", // default ungu
 }: ProfileSectionProps) {
   return (
     <motion.div
@@ -36,19 +39,24 @@ export function ProfileSection({
       >
         <Avatar
           src={avatar}
-          className="w-24 h-24 mx-auto mb-4 ring-4 ring-purple-200 dark:ring-purple-800"
+          className="w-24 h-24 mx-auto mb-4"
           size="lg"
+          style={{
+            boxShadow: `0 0 0 4px ${theme_color}40`, // ring dengan opacity 40%
+          }}
         />
-      </motion.div>
 
-      <motion.h1
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"
-      >
-        {name}
-      </motion.h1>
+        <motion.h1
+          className="text-2xl font-bold mb-2"
+          style={{
+            background: `linear-gradient(to right, ${theme_color}, ${theme_color}CC)`,
+            WebkitBackgroundClip: "text",
+            color: "transparent",
+          }}
+        >
+          {name}
+        </motion.h1>
+      </motion.div>
 
       <motion.p
         initial={{ opacity: 0 }}
@@ -59,26 +67,24 @@ export function ProfileSection({
         {bio}
       </motion.p>
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        className="flex justify-center space-x-8 mb-6"
-      >
-        <div className="text-center">
-          <div className="font-semibold text-lg">{followers}</div>
-          <div className="text-gray-500 text-sm">Followers</div>
-        </div>
-        <div className="text-center">
-          <div className="font-semibold text-lg">{following}</div>
-          <div className="text-gray-500 text-sm">Following</div>
-        </div>
-        <div className="text-center">
-          <div className="font-semibold text-lg">{posts}</div>
-          <div className="text-gray-500 text-sm">Posts</div>
-        </div>
-      </motion.div>
+      {/* CTA Button */}
+      {cta_text && cta_link && (
+        <motion.a
+          href={cta_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="inline-block mb-8 px-6 py-3 rounded-xl font-semibold text-white shadow-lg"
+          style={{
+            background: `linear-gradient(to right, ${theme_color}, ${theme_color}CC)`,
+          }}
+        >
+          {cta_text}
+        </motion.a>
+      )}
 
+      {/* Social Buttons */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
