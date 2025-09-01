@@ -1,144 +1,237 @@
-// app/[slug]/page.tsx
 "use client";
 
-import React from "react";
-import { notFound } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Instagram,
-  Youtube,
-  Twitter,
-  Globe,
-  Mail,
-  Music,
-  ShoppingBag,
-  Coffee,
-} from "lucide-react";
-
 import { ProfileSection } from "@/components/profile-section";
 import { LinkButton } from "@/components/link-button";
-import { InstagramGrid } from "@/components/instagram-grid";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Loader2 } from "lucide-react";
+import CircularGallery from "@/components/circular-gallery";
+import { Card, CardFooter, Button, Image } from "@heroui/react";
 
-interface ProfileData {
-  name: string;
-  bio: string;
-  avatar: string;
-  followers: string;
-  following: string;
-  posts: string;
+interface DummyData {
+  profile: {
+    id: string;
+    bio: string;
+    logo: string | null;
+    theme_color: string;
+    template: string;
+    cta_link: string;
+    name: string;
+    slug: string;
+    cta_text: string;
+  };
+  links: {
+    id: number;
+    platform: string;
+    url: string;
+  }[];
+  social: {
+    id: string;
+    caption: string;
+    taken_at: string;
+    images: string;
+    likes: number;
+    link_post: string;
+  }[];
 }
 
-interface SocialLink {
-  title: string;
-  url: string;
-  icon: React.ReactNode;
-  gradient: string;
-}
+export default function UserPage() {
+  const [data, setData] = useState<DummyData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-interface InstagramPost {
-  id: string;
-  image: string;
-  likes: string;
-  comments: string;
-}
-
-interface UserData {
-  profile: ProfileData;
-  socialLinks: SocialLink[];
-  instagramPosts: InstagramPost[];
-}
-
-// Dummy data per slug
-const usersData: Record<string, UserData> = {
-  sarah: {
+  // Dummy data
+  const dummy: DummyData = {
     profile: {
-      name: "Sarah Johnson",
-      bio: "✨ Content Creator & Digital Artist\n📍 Based in San Francisco\n💜 Spreading positivity through art",
-      avatar:
-        "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&dpr=2",
-      followers: "12.5K",
-      following: "890",
-      posts: "156",
+      id: "1",
+      bio: "Linkpro. Connecting with your friend by link!",
+      logo: null,
+      theme_color: "#ED125F",
+      template: "default",
+      cta_link: "https://example.com",
+      name: "Linkpro",
+      slug: "linkpro",
+      cta_text: "Touch Me",
     },
-    socialLinks: [
+    links: [
+      { id: 1, platform: "Instagram", url: "https://instagram.com" },
+      { id: 2, platform: "Twitter", url: "https://twitter.com" },
+    ],
+    social: [
       {
-        title: "Follow on Instagram",
-        url: "https://instagram.com",
-        icon: <Instagram size={20} />,
-        gradient:
-          "bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 hover:from-purple-700 hover:via-pink-600 hover:to-orange-600",
+        id: "s1",
+        caption: "My first post",
+        taken_at: "2025-08-31",
+        images: "https://via.placeholder.com/300?text=Instagram+Post+1",
+        likes: 123,
+        link_post: "https://instagram.com/p/abc123",
       },
       {
-        title: "Subscribe on YouTube",
-        url: "https://youtube.com",
-        icon: <Youtube size={20} />,
-        gradient:
-          "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700",
+        id: "s2",
+        caption: "Another post",
+        taken_at: "2025-08-30",
+        images: "https://via.placeholder.com/300?text=Instagram+Post+2",
+        likes: 456,
+        link_post: "https://instagram.com/p/def456",
       },
     ],
-    instagramPosts: [
-      {
-        id: "1",
-        image:
-          "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=2",
-        likes: "2.1K",
-        comments: "48",
-      },
-      {
-        id: "2",
-        image:
-          "https://images.pexels.com/photos/1386604/pexels-photo-1386604.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=2",
-        likes: "1.8K",
-        comments: "32",
-      },
-    ],
-  },
-};
+  };
 
-// Reserved slugs
-const reservedSlugs = ["admin", "login", "register", "onboarding"];
+  useEffect(() => {
+    // Simulate API delay
+    setTimeout(() => {
+      setData(dummy);
+      setLoading(false);
+    }, 800);
+  }, []);
 
-interface PageProps {
-  params: Promise<{ slug: string }> | { slug: string };
-}
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://www.instagram.com/embed.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => document.body.removeChild(script);
+  }, []);
 
-export default function UserPage({ params }: PageProps) {
-  // unwrap params dengan type assertion
-  const { slug } = React.use(params as Promise<{ slug: string }>);
-
-  if (reservedSlugs.includes(slug) || !usersData[slug]) {
-    notFound();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="animate-spin w-6 h-6 text-gray-500" />
+      </div>
+    );
   }
 
-  const { profile, socialLinks, instagramPosts } = usersData[slug];
+  if (!data) return <p>Data not found</p>;
+
+  const { profile, links, social } = data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-900 dark:via-purple-900 dark:to-pink-900">
+    <div
+      className="min-h-screen"
+      style={{
+        background: `linear-gradient(to bottom right, ${profile.theme_color}20, ${profile.theme_color}40)`,
+      }}
+    >
       <ThemeSwitcher />
       <div className="container mx-auto px-4 py-8 max-w-md">
-        <ProfileSection {...profile} />
+        <ProfileSection
+          name={profile.name}
+          bio={profile.bio}
+          avatar={
+            profile.logo ?? "https://via.placeholder.com/150?text=No+Logo"
+          }
+          followers={""}
+          following={""}
+          posts={""}
+        />
 
-        <motion.div
+        <LinkButton
+          key={""}
+          title={profile.cta_text}
+          url={"https://wa.me/6281235024790"}
+          style={{ background: profile.theme_color }}
+          className="hover:opacity-90"
+          icon={null}
+          delay={0.1 * 1}
+        />
+
+        <p className="absolute mt-10 font-semibold text-pink-600">
+          Cek Info Terbaru Dari Kami!
+        </p>
+        <div className="my-2" style={{ height: "400px", position: "relative" }}>
+          <CircularGallery
+            bend={0}
+            textColor="#ffffff"
+            borderRadius={0.05}
+            scrollEase={0.02}
+          />
+        </div>
+
+        {/* {Array.from({ length: 2 }).map((_, idx) => (
+          <motion.div
+            key={idx}
+            className="mt-4 flex space-x-4 overflow-x-auto pb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: idx * 0.1 }}
+          >
+            {social.map((s) => (
+              <img
+                key={s.id}
+                src="https://scontent-cgk2-2.cdninstagram.com/v/t39.30808-6/533090909_1149464353876109_7549913952150439106_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQuaW1hZ2VfdXJsZ2VuLjEyMDB4MTUwMC5zZHIuZjMwODA4LmRlZmF1bHRfaW1hZ2UuYzIifQ&_nc_ht=scontent-cgk2-2.cdninstagram.com&_nc_cat=105&_nc_oc=Q6cZ2QFeOEurpsvNscEI1sG081wJyDjcRxDc3Nog7xxs-QP4AmKAY6hoUFnPdKEbsAasisA&_nc_ohc=Hssl_PGLAYQQ7kNvwFiWK1b&_nc_gid=9--yBZ-nKzITf9sQpuIkJA&edm=AP4sbd4AAAAA&ccb=7-5&ig_cache_key=MzcxMDIxNDA2MTM0MzgxNjcwOQ%3D%3D.3-ccb7-5&oh=00_AfWk9Zia1jeEet5Sk0Ks8Qo6eZF-zGYmYoPDcBLbrojy2g&oe=68BA0B46&_nc_sid=7a9f4b"
+                alt={s.caption}
+                className="h-48 w-48 flex-shrink-0 rounded-lg object-cover"
+              />
+            ))}
+          </motion.div>
+        ))} */}
+
+        {/* Links */}
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.7 }}
           className="space-y-4 mb-8"
         >
-          {socialLinks.map((link, index) => (
+          {links.map((link, index) => (
             <LinkButton
-              key={link.title}
-              title={link.title}
+              key={link.id}
+              title={link.platform.toUpperCase()}
               url={link.url}
-              icon={link.icon}
-              gradient={link.gradient}
+              style={{ background: profile.theme_color }}
+              className="hover:opacity-90"
+              icon={null}
               delay={0.1 * index}
             />
           ))}
+        </motion.div> */}
+        <p className="my-5 font-semibold text-pink-600">Cek Produk Kami!</p>
+        <motion.div>
+          <div className="w-max flex gap-4">
+            <Card isFooterBlurred className="border-none" radius="lg">
+              <Image
+                alt="Woman listing to music"
+                className="object-cover"
+                height={200}
+                src="https://plus.unsplash.com/premium_photo-1669652639356-f5cb1a086976?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                width={200}
+              />
+              <CardFooter className="justify-between before:bg-white/10 border-white/20 border-1 overflow-hidden py-1 absolute before:rounded-xl rounded-large bottom-1 w-[calc(100%_-_8px)] shadow-small ml-1 z-10">
+                <p className="text-tiny text-pink-500/80">Notebook</p>
+                <Button
+                  className="text-tiny text-white bg-pink-700"
+                  color="default"
+                  radius="lg"
+                  size="sm"
+                  variant="flat"
+                >
+                  Order
+                </Button>
+              </CardFooter>
+            </Card>
+            <Card isFooterBlurred className="border-none" radius="lg">
+              <Image
+                alt="Woman listing to music"
+                className="object-cover"
+                height={200}
+                src="https://plus.unsplash.com/premium_photo-1685136481944-9fbed1349e41?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                width={200}
+              />
+              <CardFooter className="justify-between before:bg-white/10 border-white/20 border-1 overflow-hidden py-1 absolute before:rounded-xl rounded-large bottom-1 w-[calc(100%_-_8px)] shadow-small ml-1 z-10">
+                <p className="text-tiny text-pink-500/80">Papenote</p>
+                <Button
+                  className="text-tiny text-white bg-pink-700"
+                  color="default"
+                  radius="lg"
+                  size="sm"
+                  variant="flat"
+                >
+                  Order
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </motion.div>
-
-        <InstagramGrid posts={instagramPosts} />
-
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
