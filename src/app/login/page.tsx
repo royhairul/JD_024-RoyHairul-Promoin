@@ -15,9 +15,10 @@ import { IconBrandGoogleFilled } from "@tabler/icons-react";
 import Image from "next/image";
 import { useState } from "react";
 import { api } from "@/lib/axios";
-import { loginSchema } from "./schema";
+import { loginSchema } from "./schema/login-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 type LoginFormValues = {
   email: string;
@@ -25,6 +26,7 @@ type LoginFormValues = {
 };
 
 export default function Login() {
+  const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
 
   const {
@@ -39,7 +41,8 @@ export default function Login() {
     setLoading(true);
     try {
       const { data: res } = await api.post("/auth/login", data);
-      console.log("Login success:", res);
+      localStorage.setItem("accessToken", res.data.session.access_token);
+      router.push("/onboarding/profile");
     } catch (err) {
       addToast({
         title: "Login Failed",
@@ -65,10 +68,10 @@ export default function Login() {
       <Card className="w-full max-w-md p-4 shadow-lg border border-gray-200">
         <CardHeader className="flex flex-col items-start">
           <Image
-            src="/assets/logo-sm.png"
+            src="/assets/logo.png"
             alt="Logo"
-            width={60}
-            height={24}
+            width={120}
+            height={90}
             className="pt-6 pb-2"
           />
           <h1 className="text-2xl font-bold">Welcome Back 👋</h1>
@@ -96,7 +99,7 @@ export default function Login() {
           />
 
           <div className="flex justify-end text-sm">
-            <Link href="#" size="sm" color="primary">
+            <Link href="#" size="sm" color="warning">
               Forgot password?
             </Link>
           </div>
@@ -104,7 +107,7 @@ export default function Login() {
 
         <CardFooter className="flex flex-col gap-3">
           <Button
-            color="primary"
+            color="warning"
             variant="shadow"
             fullWidth
             onPress={() => handleSubmit(onSubmit)()}
@@ -134,7 +137,7 @@ export default function Login() {
             <Link
               href="/register"
               size="sm"
-              color="primary"
+              color="warning"
               className="font-medium"
             >
               Sign up
