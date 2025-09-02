@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -24,6 +24,7 @@ import { z } from "zod";
 import { profileSchema } from "./schema/profile-schema";
 import { api } from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/supabase-client";
 
 type RcFileType = File;
 
@@ -44,6 +45,18 @@ export default function ProfileForm() {
   const [previewTitle, setPreviewTitle] = useState("");
   const [color, setColor] = useState("#4f46e5");
   const route = useRouter();
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data?.session) {
+        localStorage.setItem("accessToken", data.session.access_token);
+      } else {
+        console.error("Failed to get session:", error);
+      }
+    };
+    getSession();
+  }, []);
 
   const {
     register,

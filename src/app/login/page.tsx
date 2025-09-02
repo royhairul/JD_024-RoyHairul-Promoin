@@ -19,6 +19,7 @@ import { loginSchema } from "./schema/login-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/supabase-client";
 
 type LoginFormValues = {
   email: string;
@@ -54,10 +55,18 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      window.location.href = "/api/auth/google";
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "http://localhost:3000/onboarding/profile",
+        },
+      });
+    } catch (err) {
+      console.error("Error signing google:", err);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
